@@ -1,3 +1,5 @@
+/* jshint esversion: 6 */
+
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 
@@ -14,7 +16,7 @@ const should = chai.should();
 chai.use(chaiHttp);
 
 
-describe('Shopping List', function() {
+describe('Recipes', function() {
 
   // Before our tests run, we activate the server. Our `runServer`
   // function returns a promise, and we return the that promise by
@@ -44,7 +46,7 @@ describe('Shopping List', function() {
     // at the end of the test. The `chai.request(server).get...` call is asynchronous
     // and returns a Promise, so we just return it.
     return chai.request(app)
-      .get('/shopping-list')
+      .get('/recipes')
       .then(function(res) {
         res.should.have.status(200);
         res.should.be.json;
@@ -53,8 +55,8 @@ describe('Shopping List', function() {
         // because we create three items on app load
         res.body.length.should.be.at.least(1);
         // each item should be an object with key/value pairs
-        // for `id`, `name` and `checked`.
-        const expectedKeys = ['id', 'name', 'checked'];
+        // for `id`, `name` and `ingredients`.
+        const expectedKeys = ['id', 'name', 'ingredients'];
         res.body.forEach(function(item) {
           item.should.be.a('object');
           item.should.include.keys(expectedKeys);
@@ -67,15 +69,15 @@ describe('Shopping List', function() {
   //  2. inspect response object and prove it has right
   //  status code and that the returned object has an `id`
   it('should add an item on POST', function() {
-    const newItem = {name: 'coffee', checked: false};
+    const newItem = {name: 'ice cream', ingredients: ['milk', 'sugar', 'vanilla', 'cream']};
     return chai.request(app)
-      .post('/shopping-list')
+      .post('/recipes')
       .send(newItem)
       .then(function(res) {
         res.should.have.status(201);
         res.should.be.json;
         res.body.should.be.a('object');
-        res.body.should.include.keys('id', 'name', 'checked');
+        res.body.should.include.keys('id', 'name', 'ingredients');
         res.body.id.should.not.be.null;
         // response should be deep equal to `newItem` from above if we assign
         // `id` to it from `res.body.id`
@@ -96,13 +98,13 @@ describe('Shopping List', function() {
     // request to the app, we update it with an `id` property so
     // we can make a second, PUT call to the app.
     const updateData = {
-      name: 'foo',
-      checked: true
+      name: 'ice cream',
+      ingredients: ['milk', 'sugar', 'chocolate', 'cream']
     };
 
     return chai.request(app)
       // first have to get so we have an idea of object to update
-      .get('/shopping-list')
+      .get('/recipes')
       .then(function(res) {
         updateData.id = res.body[0].id;
         // this will return a promise whose value will be the response
@@ -111,7 +113,7 @@ describe('Shopping List', function() {
         // returning a promise and chaining with `then`, but we find
         // this approach cleaner and easier to read and reason about.
         return chai.request(app)
-          .put(`/shopping-list/${updateData.id}`)
+          .put(`/recipes/${updateData.id}`)
           .send(updateData);
       })
       // prove that the PUT request has right status code
@@ -132,10 +134,10 @@ describe('Shopping List', function() {
     return chai.request(app)
       // first have to get so we have an `id` of item
       // to delete
-      .get('/shopping-list')
+      .get('/recipes')
       .then(function(res) {
         return chai.request(app)
-          .delete(`/shopping-list/${res.body[0].id}`);
+          .delete(`/recipes/${res.body[0].id}`);
       })
       .then(function(res) {
         res.should.have.status(204);
